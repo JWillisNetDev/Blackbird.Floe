@@ -1,0 +1,8 @@
+{
+  "appHost": {
+    "path": "Blackbird.Floe.Aspire.AppHost/Blackbird.Floe.Aspire.AppHost.csproj"
+  },
+  "features": {
+    "defaultWatchEnable": "true"
+  }
+}
