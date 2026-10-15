@@ -3,4 +3,5 @@
   <Project Path="Blackbird.Floe.AppHost/Blackbird.Floe.AppHost.csproj" />
   <Project Path="Blackbird.Floe.Data/Blackbird.Floe.Data.csproj" />
   <Project Path="Blackbird.Floe.ServiceDefaults/Blackbird.Floe.ServiceDefaults.csproj" />
+  <Project Path="Blackbird.Floe.Tests/Blackbird.Floe.Tests.csproj" />
 </Solution>
