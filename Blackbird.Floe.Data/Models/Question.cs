@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Blackbird.Floe.Data;
+namespace Blackbird.Floe.Data.Models;
 
 public class Question
 {
