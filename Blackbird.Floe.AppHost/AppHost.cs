@@ -4,11 +4,19 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgres")
     .WithPgAdmin()
-    .AddDatabase("floe");
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
+    
+var floedb = postgres.AddDatabase("floe");
 
 var api = builder.AddProject<Blackbird_Floe_Api>("api")
-    .WithReference(postgres)
-    .WaitFor(postgres);
+    .WithUrlForEndpoint("https", static u =>
+    {
+        u.Url = "/scalar";
+        u.DisplayText = "Scalar UI";
+    })
+    .WithReference(floedb)
+    .WaitFor(floedb);
 
 builder.AddViteApp("web", "../floe-web")
     .WithReference(api)
