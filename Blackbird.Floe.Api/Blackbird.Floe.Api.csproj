@@ -13,6 +13,10 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.13">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Scalar.AspNetCore" Version="2.18.0" />
   </ItemGroup>
 
@@ -21,6 +25,14 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>fb62a755-d059-4cc9-8ad1-81d5340bb19f</UserSecretsId>
+    <OpenApiDocumentsDirectory>../floe-web/openapi</OpenApiDocumentsDirectory>
+  </PropertyGroup>
+
+  <!-- Configuration to generate an OpenAPI spec document in the web front-end project -->
+  <PropertyGroup>
+    <OpenApiDocumentsDirectory>../floe-web/openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name floe-api</OpenApiGenerateDocumentsOptions>
+    <OpenApiGenerationEnvironment>OpenApi</OpenApiGenerationEnvironment>
   </PropertyGroup>
 
 </Project>

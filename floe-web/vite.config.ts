@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import tailwindcss from '@tailwindcss/vite'
 
 const api = process.env.services__api__http__0 ||
   process.env.services__api__https__0 ||
@@ -15,6 +16,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    tailwindcss(),
   ],
   resolve: {
     alias: {
