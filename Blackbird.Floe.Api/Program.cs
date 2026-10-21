@@ -1,17 +1,14 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
+using Blackbird.Floe.Api.Endpoints;
 using Blackbird.Floe.Api.Services;
 using Blackbird.Floe.Api.Services.Auth;
 using Blackbird.Floe.Data;
-using Blackbird.Floe.Data.Models.Identity;
 
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
-
-using OpenTelemetry.Trace;
 
 using Scalar.AspNetCore;
 
@@ -85,41 +82,10 @@ app.UseAuthorization();
 
 app.MapDefaultEndpoints();
 
-// TODO - ALL endpoint mapping goes into extensions and static classes
-// handlers also go into static classes
-
 var api = app.MapGroup("/api");
-var auth = app.MapGroup("/auth");
+var auth = api.MapGroup("/auth");
 
-auth.MapPost("/login", async Task<Results<Ok<LoginResponse>, ValidationProblem, ProblemHttpResult>> (LoginRequest req, IUserManager users, TokenService tokens, PasswordHashService passwordHasher) =>
-{
-    if (await users.FindByEmailAsync(req.Email) is { PasswordHash: string expectedHash } user
-        && passwordHasher.Verify(req.Password, expectedHash))
-    {
-        return TypedResults.Ok(new LoginResponse(tokens.Create(user)));
-    }
-
-    return TypedResults.Problem("The username or password was not registered or incorrect.", statusCode: StatusCodes.Status401Unauthorized);
-})
-    .WithSummary("Log a User in")
-    .ProducesProblem(StatusCodes.Status401Unauthorized);
-
-auth.MapPost("/register", async Task<Results<Ok<LoginResponse>, ValidationProblem, ProblemHttpResult>> (RegisterRequest req, IUserManager users, TokenService tokens, PasswordHashService passwordHasher) =>
-{
-    // first, ensure the email is unique
-    if (await users.EmailExistsAsync(req.Email))
-    {
-        return TypedResults.Problem("The email is already registered.", statusCode: StatusCodes.Status409Conflict);
-    }
-
-    // hash the password, create the user, and save it to the database
-    var passwordHash = passwordHasher.Hash(req.Password);
-    User user = new(req.Email, passwordHash);
-    await users.AddAsync(user);
-    return TypedResults.Ok(new LoginResponse(tokens.Create(user)));
-})
-    .WithSummary("Register a New User")
-    .ProducesProblem(StatusCodes.Status409Conflict);
+auth.AddAuthEndpoints();
 
 app.MapGet("/api/weather", () => new[] { "Sunny", "Cloudy", "Rainy" });
 
