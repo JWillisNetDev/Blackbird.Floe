@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography.X509Certificates;
-
-using Blackbird.Floe.Api.Dtos;
+﻿using Blackbird.Floe.Api.Dtos;
 using Blackbird.Floe.Api.Services.Auth;
 using Blackbird.Floe.Data.Models.Identity;
 
@@ -27,7 +25,7 @@ public static class AuthEndpoints
     }
 
     public static async Task<Results<Ok<TokenResponse>, ValidationProblem, ProblemHttpResult>> Register(
-        LoginRequest request,
+        RegisterRequest request,
         IUserManager users,
         TokenService tokens,
         PasswordHashService passwordHasher)

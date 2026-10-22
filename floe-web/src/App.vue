@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import ApiTest from './components/ApiTest.vue';
-
+import AppLayout from '@/layouts/AppLayout.vue';
 </script>
 
 <template>
-  <main>
-    <ApiTest />
-  </main>
+  <AppLayout />
 </template>
 
 <style scoped></style>

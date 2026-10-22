@@ -8,10 +8,12 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build"
+    "type-check": "vue-tsc --build",
+    "gen:api": "openapi-ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@vueuse/core": "^15.0.0",
     "pinia": "^4.0.3",
     "tailwindcss": "^4.3.3",
     "vue": "^3.5.42",
