@@ -74,31 +74,31 @@ jobs:
           docker build -f deploy/migrator.Dockerfile -t ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG .
           docker push ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG
   
-    deploy:
-      needs: package
-      runs-on: ubuntu-latest
-      environment: staging
-      concurrency:
-        group: staging
-        cancel-in-progress: false
-      defaults:
-        run:
-          working-directory: infra/envs/staging
-      steps:
-        - uses: actions/checkout@v5
-        - uses: hashicorp/setup-terraform@v3
-          with:
-            terraform_wrapper: false
-        - uses: aws-actions/configure-aws-credentials@v5
-          with:
-            role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-            aws-region: ${{ env.AWS_REGION }}
-        - run: terraform init
-        - name: Migrate Task Definition
-          run: terraform apply -auto-approve -var-file=staging.tfvars -var image_tag=$IMAGE_TAG -target=module.service.aws_ecs_task_definition.migrate
-        - name: Migrate
-          run: ../../../deploy/migrate.sh
-        - name: Rollout
-          run: terraform apply -auto-approve -var-file=staging.tfvars -var image_tag=$IMAGE_TAG
-        - name: Wait until Stable
-          run: aws ecs wait service-stable --cluster "$(terraform output -raw cluster_name)" --services "$(terraform output -raw service_name)"
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency:
+      group: staging
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: infra/envs/staging
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - run: terraform init
+      - name: Migrate Task Definition
+        run: terraform apply -auto-approve -var-file=staging.tfvars -var image_tag=$IMAGE_TAG -target=module.service.aws_ecs_task_definition.migrate
+      - name: Migrate
+        run: ../../../deploy/migrate.sh
+      - name: Rollout
+        run: terraform apply -auto-approve -var-file=staging.tfvars -var image_tag=$IMAGE_TAG
+      - name: Wait until Stable
+        run: aws ecs wait service-stable --cluster "$(terraform output -raw cluster_name)" --services "$(terraform output -raw service_name)"
