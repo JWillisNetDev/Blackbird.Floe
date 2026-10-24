@@ -19,7 +19,7 @@ variable "region" {
 
 variable "github_repo" {
   type    = string
-  default = "JWillisNetDev/Blackbird.Floe"
+  default = "JWillisNetDev@13595736/Blackbird.Floe@1419456811"
 }
 
 data "aws_caller_identity" "current" {}

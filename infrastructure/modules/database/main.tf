@@ -40,9 +40,9 @@ resource "aws_rds_cluster_instance" "writer" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "admin" {
-  for_each          = toset(var.admin_cidrs)
+  count             = length(var.admin_cidrs)
   security_group_id = aws_security_group.this.id
-  cidr_ipv4         = each.value
+  cidr_ipv4         = var.admin_cidrs[count.index]
   from_port         = 5432
   to_port           = 5432
   ip_protocol       = "tcp"

@@ -8,6 +8,7 @@ variable "image_tag" {
 }
 variable "certificate_arn" {
   type = string
+  default = null
 }
 variable "engine_version" {
   type = string

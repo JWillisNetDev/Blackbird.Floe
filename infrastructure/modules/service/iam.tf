@@ -10,7 +10,7 @@ data "aws_iam_policy_document" "ecs_assume" {
 
 resource "aws_iam_role" "execution" {
   name = "${var.name}-execution"
-  assume_role_policy = data.aws_iam_policy_document.ecs_assume.ecs_assume.json
+  assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 }
 
 resource "aws_iam_role_policy_attachment" "execution" {

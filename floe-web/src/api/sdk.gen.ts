@@ -18,6 +18,8 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
+export const getApiWeather = <ThrowOnError extends boolean = false>(options?: Options<GetApiWeatherData, ThrowOnError>) => (options?.client ?? client).get<GetApiWeatherResponses, unknown, ThrowOnError>({ url: '/api/weather', ...options });
+
 /**
  * Login
  */
@@ -41,5 +43,3 @@ export const postApiAuthRegister = <ThrowOnError extends boolean = false>(option
         ...options.headers
     }
 });
-
-export const getApiWeather = <ThrowOnError extends boolean = false>(options?: Options<GetApiWeatherData, ThrowOnError>) => (options?.client ?? client).get<GetApiWeatherResponses, unknown, ThrowOnError>({ url: '/api/weather', ...options });

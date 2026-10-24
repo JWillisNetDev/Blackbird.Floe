@@ -15,9 +15,9 @@ locals {
   log_config = {
     logDriver = "awslogs"
     options = {
-      awslog-group          = aws_cloudwatch_log_group.this.name
-      awslogs-region        = data.aws_region.current
-      awslogs-stream-prefix = "ecs"
+      "awslogs-group"          = aws_cloudwatch_log_group.this.name
+      "awslogs-region"        = data.aws_region.current.region
+      "awslogs-stream-prefix" = "ecs"
     }
   }
 }
@@ -28,7 +28,7 @@ resource "aws_ecs_cluster" "this" {
 
 resource "aws_cloudwatch_log_group" "this" {
   name              = "/ecs/${var.name}"
-  retention_in_days = 28
+  retention_in_days = 30
 }
 
 ephemeral "random_password" "jwt" {
@@ -177,7 +177,7 @@ resource "aws_ecs_task_definition" "api" {
     essential    = true
     portMappings = [{ containerPort = local.container_port }]
     environment = concat(local.db_env, [
-      { name = "ASPNETCORE_ENVIRONMENT", value = vars.environment },
+      { name = "ASPNETCORE_ENVIRONMENT", value = var.environment },
       { name = "ASPNETCORE_FORWARDEDHEADERS_ENABLED", value = "true" },
     ])
     secrets = concat(local.db_secrets, [

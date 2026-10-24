@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
   id-token: write
+  contents: read
 
 env:
   AWS_REGION: us-west-2
@@ -31,7 +31,7 @@ jobs:
   package:
     needs: verify
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     environment: staging
     steps:
       - uses: actions/checkout@v5
@@ -56,34 +56,39 @@ jobs:
           npm run build
       - name: Stage SPA into API wwwroot
         run: |
-          rm -rf src/Blackbird.Floe.Api/wwwroot
-          cp -r floe-web/dist src/Blackbird.Floe.Api/wwwroot
+          rm -rf Blackbird.Floe.Api/wwwroot
+          cp -r floe-web/dist Blackbird.Floe.Api/wwwroot
       - name: API Image
         run: >
-          dotnet publish src/Blackbird.Floe.Api -t:PublishContainer
+          dotnet publish Blackbird.Floe.Api -t:PublishContainer
           -p:ContainerRuntimeIdentifier=linux-arm64
           -p:ContainerRegistry=${{ steps.ecr.outputs.registry }}
           -p:ContainerRepository=floe-api
           -p:ContainerImageTags=$IMAGE_TAG
       - name: EF Bundle Image
+        env:
+          OpenApiGenerateDocuments: "false"
         run: |
-          dotnet tool install -g dotnet-ef
+          dotnet tool restore
           dotnet ef migrations bundle \
-            --project src/Blackbird.Floe.Data --startup-project src/Blackbird.Floe.Api \
+            --project Blackbird.Floe.Data --startup-project Blackbird.Floe.Api \
             -r linux-arm64 --self-contained -o efbundle
-          docker build -f deploy/migrator.Dockerfile -t ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG .
+          docker build -f infrastructure/deploy/migrate.Dockerfile -t ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG .
           docker push ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG
   
   deploy:
     needs: package
     runs-on: ubuntu-latest
     environment: staging
+    env:
+      TF_VAR_engine_version: ${{ vars.ENGINE_VERSION }}
+      TF_VAR_admin_cidrs: ${{ secrets.ADMIN_CIDRS }}
     concurrency:
       group: staging
       cancel-in-progress: false
     defaults:
       run:
-        working-directory: infra/envs/staging
+        working-directory: infrastructure/envs/staging
     steps:
       - uses: actions/checkout@v5
       - uses: hashicorp/setup-terraform@v3
@@ -95,10 +100,10 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - run: terraform init
       - name: Migrate Task Definition
-        run: terraform apply -auto-approve -var-file=staging.tfvars -var image_tag=$IMAGE_TAG -target=module.service.aws_ecs_task_definition.migrate
+        run: terraform apply -auto-approve -var image_tag=$IMAGE_TAG -target=module.service.aws_ecs_task_definition.migrate
       - name: Migrate
-        run: ../../../deploy/migrate.sh
+        run: ../../deploy/migrate.sh
       - name: Rollout
-        run: terraform apply -auto-approve -var-file=staging.tfvars -var image_tag=$IMAGE_TAG
+        run: terraform apply -auto-approve -var image_tag=$IMAGE_TAG
       - name: Wait until Stable
         run: aws ecs wait service-stable --cluster "$(terraform output -raw cluster_name)" --services "$(terraform output -raw service_name)"

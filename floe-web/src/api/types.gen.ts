@@ -37,6 +37,22 @@ export type TokenResponse = {
     accessToken: string;
 };
 
+export type GetApiWeatherData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/weather';
+};
+
+export type GetApiWeatherResponses = {
+    /**
+     * OK
+     */
+    200: Array<string>;
+};
+
+export type GetApiWeatherResponse = GetApiWeatherResponses[keyof GetApiWeatherResponses];
+
 export type PostApiAuthLoginData = {
     body: LoginRequest;
     path?: never;
@@ -94,19 +110,3 @@ export type PostApiAuthRegisterResponses = {
 };
 
 export type PostApiAuthRegisterResponse = PostApiAuthRegisterResponses[keyof PostApiAuthRegisterResponses];
-
-export type GetApiWeatherData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/weather';
-};
-
-export type GetApiWeatherResponses = {
-    /**
-     * OK
-     */
-    200: Array<string>;
-};
-
-export type GetApiWeatherResponse = GetApiWeatherResponses[keyof GetApiWeatherResponses];

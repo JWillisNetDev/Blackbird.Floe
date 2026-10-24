@@ -5,6 +5,28 @@
     "version": "1.0.0"
   },
   "paths": {
+    "/api/weather": {
+      "get": {
+        "tags": [
+          "Blackbird.Floe.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [
@@ -98,28 +120,6 @@
               "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/weather": {
-      "get": {
-        "tags": [
-          "Blackbird.Floe.Api"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
                 }
               }
             }
@@ -267,10 +267,10 @@
   },
   "tags": [
     {
-      "name": "AuthEndpoints"
+      "name": "Blackbird.Floe.Api"
     },
     {
-      "name": "Blackbird.Floe.Api"
+      "name": "AuthEndpoints"
     }
   ]
 }

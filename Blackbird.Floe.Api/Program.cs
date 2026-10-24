@@ -74,7 +74,7 @@ else
 }
 
 // fixes: OpenAPI spec gen shouldn't try to migrate, but will because it runs the program.
-if (!isOpenApiGeneration)
+if (app.Environment.IsDevelopment() && !isOpenApiGeneration)
 {
     await using (var scope = app.Services.CreateAsyncScope())
     {
