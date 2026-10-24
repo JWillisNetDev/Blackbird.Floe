@@ -44,6 +44,20 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: floe-web/package-lock.json
+      - name: Build floe-web
+        working-directory: floe-web
+        run: |
+          npm ci
+          npm run build
+      - name: Stage SPA into API wwwroot
+        run: |
+          rm -rf src/Blackbird.Floe.Api/wwwroot
+          cp -r floe-web/dist src/Blackbird.Floe.Api/wwwroot
       - name: API Image
         run: >
           dotnet publish src/Blackbird.Floe.Api -t:PublishContainer

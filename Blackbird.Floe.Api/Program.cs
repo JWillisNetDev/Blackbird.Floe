@@ -68,6 +68,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(o => o.AddPreferredSecuritySchemes("Bearer"));
 }
+else
+{
+    app.MapStaticAssets();
+}
 
 // fixes: OpenAPI spec gen shouldn't try to migrate, but will because it runs the program.
 if (!isOpenApiGeneration)
@@ -83,6 +87,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapDefaultEndpoints();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.MapFallbackToFile("{*path:regex(^(?!api/).*$)}", "index.html");
+}
 
 var api = app.MapGroup("/api");
 var auth = api.MapGroup("/auth");
