@@ -492,6 +492,10 @@ $RECYCLE.BIN/
 crash.log
 crash.*.log
 
+# Variable files (containing sensitive data)
+*.tfvars
+*.tfvars.json
+
 # Local overrides (containing sensitive data)
 override.tf
 override.tf.json
