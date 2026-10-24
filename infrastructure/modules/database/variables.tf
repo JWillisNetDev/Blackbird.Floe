@@ -21,4 +21,5 @@ variable "min_capacity" {
 variable "admin_cidrs" {
   type    = list(string)
   default = []
+  sensitive = true
 }

@@ -15,6 +15,7 @@ variable "migrate_image" {
 }
 variable "certificate_arn" {
   type = string
+  default = null
 }
 variable "db_endpoint" {
   type = string

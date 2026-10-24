@@ -1,0 +1,14 @@
+variable "region" {
+  type = string
+  default = "us-west-2"
+}
+
+variable "image_tag" {
+  type = string
+}
+variable "certificate_arn" {
+  type = string
+}
+variable "engine_version" {
+  type = string
+}
