@@ -100,7 +100,11 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - run: terraform init
       - name: Migrate Task Definition
-        run: terraform apply -auto-approve -var image_tag=$IMAGE_TAG -target=module.service.aws_ecs_task_definition.migrate
+        run: terraform apply -auto-approve -var image_tag=$IMAGE_TAG \
+          -target=module.database \
+          -target=module.service.aws_ecs_cluster.this \
+          -target=module.service.aws_security_group.task \
+          -target=module.service.aws_ecs_task_definition.migrate
       - name: Migrate
         run: ../../deploy/migrate.sh
       - name: Rollout
