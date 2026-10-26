@@ -13,3 +13,8 @@ variable "certificate_arn" {
 variable "engine_version" {
   type = string
 }
+variable "admin_cidrs" {
+  type = list(string)
+  default = []
+  sensitive = true
+}

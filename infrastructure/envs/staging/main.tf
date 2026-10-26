@@ -40,6 +40,7 @@ module "database" {
   engine_version = var.engine_version
   min_capacity = 0
   max_capacity = 2
+  admin_cidrs = var.admin_cidrs
 }
 
 module "service" {

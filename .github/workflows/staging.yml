@@ -102,7 +102,7 @@ jobs:
           terraform apply -input=false -auto-approve \
             -var image_tag=$IMAGE_TAG \
             -var engine_version=${{ vars.ENGINE_VERSION }} \
-            -var admin_cidrs="${{ secrets.ADMIN_CIDRS }}" \
+            -var admin_cidrs='${{ secrets.ADMIN_CIDRS }}' \
             -target=module.services.aws_ecs_task_definition.migrate \
             -target=module.database
           {
