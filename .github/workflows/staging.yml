@@ -79,10 +79,13 @@ jobs:
           docker build -f infrastructure/deploy/migrate.Dockerfile -t ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG .
           docker push ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG
 
-  migrate:
+  deploy:
     needs: package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latesst
     environment: staging
+    defaults:
+      run:
+        working-directory: infrastructure/envs/staging
     steps:
       - uses: actions/checkout@v5
       - uses: aws-actions/configure-aws-credentials@v5
@@ -93,29 +96,24 @@ jobs:
         with:
           terraform_wrapper: false
       - name: Terraform Init
-        working-directory: infrastructure/envs/staging
         run: terraform init -input=false
-      - name: Terraform Apply Migrate
-        working-directory: infrastructure/envs/staging
+      - name: Terraform Apply
         id: tf
         run: |
           terraform apply -input=false -auto-approve \
             -var image_tag=$IMAGE_TAG \
-            -var engine_version=${{ vars.ENGINE_VERSION }} \
-            -var admin_cidrs='${{ secrets.ADMIN_CIDRS }}' \
-            -target=module.services.aws_ecs_task_definition.migrate \
-            -target=module.database
+            -var engine_version=${{ vars.ENGINE_VERSION }}
+            -var admin_cidrs='${{ secrets.ADMIN_CIDRS }}'
           {
             echo "cluster=$(terraform output -raw cluster_name)"
             echo "task_definition=$(terraform output -raw migrate_task_definition_arn)"
           } >> "$GITHUB_OUTPUT"
-      - name: Run migration task
-        id: run
+      - name: Migrate
         run: |
-          arn=$(aws ecs run-task --cluster "${{ steps.tf.outputs.cluster }}" \
+          arn = $(aws ecs run-task \
+            --cluster "${{ steps.tf.outputs.cluster }}" \
             --task-definition "${{ steps.tf.outputs.task_definition }}" \
-            --launch-type FARGATE \
-            --query 'tasks[0].taskArn' --output text)
+            --launch-type FARGATE --query 'tasks[0].taskArn' --output text)
           echo "task_arn=$arn" >> "$GITHUB_OUTPUT"
           aws ecs wait tasks-stopped --cluster "${{ steps.tf.outputs.cluster }}" --tasks "$arn"
           exit_code=$(aws ecs describe-tasks \
@@ -125,40 +123,5 @@ jobs:
             --output text)
           echo "exitCode=$exit_code"
           [ "$exit_code" = "0" ]
-  
-  # deploy:
-  #   needs: migrate
-  #   runs-on: ubuntu-latest
-  #   environment: staging
-  #   env:
-  #     TF_VAR_engine_version: ${{ vars.ENGINE_VERSION }}
-  #     TF_VAR_admin_cidrs: ${{ secrets.ADMIN_CIDRS }}
-  #   concurrency:
-  #     group: staging
-  #     cancel-in-progress: false
-  #   defaults:
-  #     run:
-  #       working-directory: infrastructure/envs/staging
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_wrapper: false
-  #     - uses: aws-actions/configure-aws-credentials@v5
-  #       with:
-  #         role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-  #         aws-region: ${{ env.AWS_REGION }}
-  #     - run: terraform init -no-input
-  #     - name: Migrate Task Definition
-  #       run: |
-  #         terraform apply -auto-approve -var image_tag=$IMAGE_TAG \
-  #           -target=module.database \
-  #           -target=module.service.aws_ecs_cluster.this \
-  #           -target=module.service.aws_security_group.task \
-  #           -target=module.service.aws_ecs_task_definition.migrate
-  #     - name: Migrate
-  #       run: ../../deploy/migrate.sh
-  #     - name: Rollout
-  #       run: terraform apply -auto-approve -var image_tag=$IMAGE_TAG
-  #     - name: Wait until Stable
-  #       run: aws ecs wait service-stable --cluster "$(terraform output -raw cluster_name)" --services "$(terraform output -raw service_name)"
+      - name: Wait until stable
+        run: aws ecs wait service-stable --cluster "${{ steps.tf.outputs.cluster }}" --services "${{ steps.tf.outputs.task_definition }}"
