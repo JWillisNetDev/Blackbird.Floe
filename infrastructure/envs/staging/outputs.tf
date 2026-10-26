@@ -16,3 +16,6 @@ output "subnet_ids" {
 output "alb_dns_name" {
   value = module.service.alb_dns_name
 }
+output "migrate_task_definition_arn" {
+  value = module.service.migrate_task_definition_arn
+}

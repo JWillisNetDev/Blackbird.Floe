@@ -13,3 +13,6 @@ output "task_security_group_id" {
 output "alb_dns_name" {
   value = aws_lb.this.dns_name
 }
+output "migrate_task_definition_arn" {
+  value = aws_ecs_task_definition.migrate.arn
+}
