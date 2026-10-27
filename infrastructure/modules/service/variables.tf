@@ -7,10 +7,13 @@ variable "vpc_id" {
 variable "subnet_ids" {
     type = list(string)
 }
-variable "image" {
+variable "image_tag" {
     type = string
 }
-variable "migrate_image" {
+variable "migrate_repo_url" {
+  type = string
+}
+variable "api_repo_url" {
   type = string
 }
 variable "certificate_arn" {

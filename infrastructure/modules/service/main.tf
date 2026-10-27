@@ -4,6 +4,9 @@ locals {
   container_port = 8080
   https          = var.certificate_arn != null
 
+  api_image = "${var.api_repo_url}:${var.image_tag}"
+  migrate_image = "${var.migrate_repo_url}:${var.image_tag}"
+
   db_env = [
     { name = "ConnectionStrings__floe", value = "Host=${var.db_endpoint};Database=floe;Username=floe;SSL Mode=Require" },
   ]
@@ -168,13 +171,21 @@ resource "aws_ecs_task_definition" "api" {
 
   runtime_platform {
     operating_system_family = "LINUX"
-    cpu_architecture        = "ARM64"
+    cpu_architecture        = "X86_64"
   }
 
   container_definitions = jsonencode([
     {
+      name             = "migrate"
+      image            = local.migrate_image
+      essential        = false
+      environment      = local.db_env
+      secrets          = local.db_secrets
+      logConfiguration = local.log_config
+    },
+    {
       name         = "api"
-      image        = var.image
+      image        = local.api_image
       essential    = true
       portMappings = [{ containerPort = local.container_port }]
       environment = concat(local.db_env, [
@@ -185,39 +196,9 @@ resource "aws_ecs_task_definition" "api" {
         { name = "Jwt__SigningKey", valueFrom = aws_secretsmanager_secret.jwt.arn }
       ])
       logConfiguration = local.log_config
-    },
-    {
-      name             = "migrate"
-      image            = var.migrate_image
-      essential        = false
-      environment      = local.db_env
-      secrets          = local.db_secrets
-      logConfiguration = local.log_config
+      dependsOn = [{ containerName = "migrate", condition = "SUCCESS" }]
     }
   ])
-}
-
-resource "aws_ecs_task_definition" "migrate" {
-  family                   = "${var.name}-migrate"
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = 256
-  memory                   = 512
-  execution_role_arn       = aws_iam_role.execution.arn
-
-  runtime_platform {
-    operating_system_family = "LINUX"
-    cpu_architecture        = "ARM64"
-  }
-
-  container_definitions = jsonencode([{
-    name             = "migrate"
-    image            = var.migrate_image
-    essential        = true
-    environment      = local.db_env
-    secrets          = local.db_secrets
-    logConfiguration = local.log_config
-  }])
 }
 
 /* Service */

@@ -48,8 +48,9 @@ module "service" {
   name = local.name
   vpc_id = data.aws_vpc.default.id
   subnet_ids = data.aws_subnets.default.ids
-  image = "${data.aws_ecr_repository.api.repository_url}:${var.image_tag}"
-  migrate_image = "${data.aws_ecr_repository.migrate.repository_url}:${var.image_tag}"
+  api_repo_url = data.aws_ecr_repository.api.repository_url
+  migrate_repo_url = data.aws_ecr_repository.migrate.repository_url
+  image_tag = var.image_tag
   certificate_arn = var.certificate_arn
   db_endpoint = module.database.endpoint
   db_secret_arn = module.database.secret_arn

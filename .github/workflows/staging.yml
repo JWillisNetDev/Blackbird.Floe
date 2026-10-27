@@ -50,6 +50,7 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: floe-web/package-lock.json
+          
       - name: Build floe-web
         working-directory: floe-web
         run: |
@@ -59,6 +60,7 @@ jobs:
         run: |
           rm -rf Blackbird.Floe.Api/wwwroot
           cp -r floe-web/dist Blackbird.Floe.Api/wwwroot
+
       - name: Check for Existing API Image
         id: api_exists
         run: |
@@ -69,10 +71,11 @@ jobs:
         if: steps.api_exists.outputs.found != 'true'
         run: |
           dotnet publish Blackbird.Floe.Api -t:PublishContainer \
-            -p:ContainerRuntimeIdentifier=linux-arm64 \
+            -p:ContainerRuntimeIdentifier=linux-x64 \
             -p:ContainerRegistry=${{ steps.ecr.outputs.registry }} \
             -p:ContainerRepository=floe-api \
             -p:ContainerImageTags=$IMAGE_TAG
+
       - name: Check for Existing EF Bundle Image
         id: migrate_exists
         run: |
@@ -88,7 +91,7 @@ jobs:
           dotnet ef migrations bundle \
             --project Blackbird.Floe.Data \
             --startup-project Blackbird.Floe.Api \
-            -r linux-arm64 \
+            -r linux-x64 \
             --self-contained \
             -o efbundle
           docker build -f infrastructure/deploy/migrate.Dockerfile -t ${{ steps.ecr.outputs.registry }}/floe-migrate:$IMAGE_TAG .
@@ -101,6 +104,9 @@ jobs:
     defaults:
       run:
         working-directory: infrastructure/envs/staging
+    env:
+      TF_VAR_engine_version: ${{ vars.ENGINE_VERSION }}
+      TF_VAR_admin_cidrs: ${{ secrets.ADMIN_CIDRS }}
     steps:
       - uses: actions/checkout@v5
       - uses: aws-actions/configure-aws-credentials@v5
@@ -112,31 +118,22 @@ jobs:
           terraform_wrapper: false
       - name: Terraform Init
         run: terraform init -input=false
-      - name: Terraform Apply
-        id: tf
+
+      - name: Terraform Plan
         run: |
-          terraform apply -input=false -auto-approve \
-            -var image_tag=$IMAGE_TAG \
-            -var engine_version=${{ vars.ENGINE_VERSION }}
-            -var admin_cidrs='${{ secrets.ADMIN_CIDRS }}'
+          terraform plan -out tfplan -var image_tag=$IMAGE_TAG
           {
-            echo "cluster=$(terraform output -raw cluster_name)"
-            echo "task_definition=$(terraform output -raw migrate_task_definition_arn)"
-          } >> "$GITHUB_OUTPUT"
-      - name: Migrate
+            echo '### Terraform Plan'
+            echo '```'
+            terraform show -no-color tfplan
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Terraform Apply
+        run: terraform apply -input=false tfplan
+
+      - name: Wait Until Stable
         run: |
-          arn = $(aws ecs run-task \
-            --cluster "${{ steps.tf.outputs.cluster }}" \
-            --task-definition "${{ steps.tf.outputs.task_definition }}" \
-            --launch-type FARGATE --query 'tasks[0].taskArn' --output text)
-          echo "task_arn=$arn" >> "$GITHUB_OUTPUT"
-          aws ecs wait tasks-stopped --cluster "${{ steps.tf.outputs.cluster }}" --tasks "$arn"
-          exit_code=$(aws ecs describe-tasks \
-            --cluster "${{ steps.tf.outputs.cluster }}" \
-            --tasks "$arn" \
-            --query "tasks[0].containers[0].exitCode" \
-            --output text)
-          echo "exitCode=$exit_code"
-          [ "$exit_code" = "0" ]
-      - name: Wait until stable
-        run: aws ecs wait service-stable --cluster "${{ steps.tf.outputs.cluster }}" --services "${{ steps.tf.outputs.task_definition }}"
+          aws ecs wait services-stable \
+            --cluster "$(terraform output -raw cluster_name)" \
+            --services "$(terraform output -raw service_name)"
