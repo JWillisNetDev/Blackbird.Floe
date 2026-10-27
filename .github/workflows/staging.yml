@@ -96,7 +96,7 @@ jobs:
 
   deploy:
     needs: package
-    runs-on: ubuntu-latesst
+    runs-on: ubuntu-latest
     environment: staging
     defaults:
       run:
