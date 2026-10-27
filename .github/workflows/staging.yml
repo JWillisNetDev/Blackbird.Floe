@@ -13,6 +13,7 @@ permissions:
 env:
   AWS_REGION: us-west-2
   IMAGE_TAG: ${{ github.sha }}
+  
 
 jobs:
   verify:
@@ -58,14 +59,28 @@ jobs:
         run: |
           rm -rf Blackbird.Floe.Api/wwwroot
           cp -r floe-web/dist Blackbird.Floe.Api/wwwroot
+      - name: Check for Existing API Image
+        id: api_exists
+        run: |
+          if aws ecr describe-images --repository-name "floe-api" --image-ids imageTag=$IMAGE_TAG >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Build and Push API Image
+        if: steps.api_exists.outputs.found != 'true'
         run: |
           dotnet publish Blackbird.Floe.Api -t:PublishContainer \
             -p:ContainerRuntimeIdentifier=linux-arm64 \
             -p:ContainerRegistry=${{ steps.ecr.outputs.registry }} \
             -p:ContainerRepository=floe-api \
-            -p:ContainerImageTags=$IMAGE_TAG 
+            -p:ContainerImageTags=$IMAGE_TAG
+      - name: Check for Existing EF Bundle Image
+        id: migrate_exists
+        run: |
+          if aws ecr describe-images --repository-name "floe-migrate" --image-ids imageTag=$IMAGE_TAG >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Build and Push EF Bundle Image
+        if: steps.migrate_exists.outputs.found != 'true'
         env:
           OpenApiGenerateDocuments: "false"
         run: |
